@@ -1,7 +1,11 @@
+import sys, os
 import numpy as np
-from engine import (get_combined_descriptors, build_feature_vector, predict_single, calibrate_velocity,
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+from engine import (get_combined_descriptors, build_feature_vector, calibrate_velocity,
                     predict_rt, classify_ion_type, apply_pca, build_conc_function, PCA_MODEL_PATH, MODEL_PATH,
-                    plot_gradient)
+                    plot_gradient, predict_with_preprocessed, preprocess_analyte)
 import matplotlib
 matplotlib.use("Agg")
 
@@ -48,13 +52,6 @@ if __name__ == "__main__":
     name = input("Enter compound name: ").strip()
 
     try:
-        desc, mol = get_combined_descriptors(smiles, name)
-        x_pca, pc_names = apply_pca(desc, PCA_MODEL_PATH)
-
-        ion = classify_ion_type(mol)
-        iontype_cols = ['IonType_anion', 'IonType_neutral']
-        ion_vector = {col: 1.0 if ion in col else 0.0 for col in iontype_cols}
-
         fg_label = prompt_choice("Functional group", [
             "Alkanol quaternary ammonium",
             "Alkyl/alkanol quaternary ammonium",
@@ -70,7 +67,7 @@ if __name__ == "__main__":
 
         void_t = conditions["Void time"]
         Lc = conditions["Column length"]
-        X, model = build_feature_vector(smiles, name, conditions, PCA_MODEL_PATH, MODEL_PATH)
+        base_features, mol = preprocess_analyte(smiles, name, PCA_MODEL_PATH)
 
         concs_iso = [5, 10, 30]
         rts_iso = []
@@ -78,7 +75,7 @@ if __name__ == "__main__":
             conds = conditions.copy()
             conds["Start Concentration"] = c
             conds["Gradient slope"] = 0.0
-            logk, tR = predict_single(smiles, name, conds, PCA_MODEL_PATH, MODEL_PATH, void_t)
+            _, tR = predict_with_preprocessed(base_features, conds, MODEL_PATH, void_t)
             rts_iso.append(tR)
         rts_iso = np.array(rts_iso)
 
@@ -98,6 +95,6 @@ if __name__ == "__main__":
         plot_gradient(times, concs, rt_adj, rt_obs)
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
 
     input("\nPress Enter to exit…")

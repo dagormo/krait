@@ -8,19 +8,28 @@ from rdkit.Chem import AllChem
 import importlib
 from mordred import Calculator, descriptors
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RESOURCES = os.path.join(BASE_DIR, "resources")
-PADEL_JAR_PATH = os.path.join(RESOURCES, "PaDEL-Descriptor.jar")
-DESCRIPTOR_TEMPLATE = os.path.join(RESOURCES, "descriptors_noredundancy.csv")
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+
+PADEL_JAR_PATH = os.path.join(DATA_DIR, "PaDEL-Descriptor", "PaDEL-Descriptor.jar")
+DESCRIPTOR_TEMPLATE = os.path.join(DATA_DIR, "descriptors_noredundancy.csv")
 
 
 # Load template for expected PaDEL features
-template_df = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0)
-_expected_padel = [c for c in template_df.columns if c not in ("Name", "SMILES")]
+_expected_padel = None
+
+def get_expected_padel():
+    global _expected_padel
+    if _expected_padel is None:
+        template_df = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0)
+        _expected_padel = [c for c in template_df.columns if c not in ("Name", "SMILES")]
+    return _expected_padel
 
 
 def get_padel_descriptors_from_smi(smiles: str, name: str, padel_jar: str = PADEL_JAR_PATH):
+    if not _expected_padel:
+        get_expected_padel()
     with tempfile.TemporaryDirectory() as temp_dir:
         smi_path = os.path.join(temp_dir, "input.smi")
         output_csv = os.path.join(temp_dir, "padel_output.csv")
@@ -77,9 +86,6 @@ def smiles_to_mol(smiles: str, name: str):
 
 
 def ensure_full_vector(d: dict, expected_keys, suffix="_padel", default=np.nan):
-    """
-    Ensure that every key in expected_keys with the given suffix exists in d, inserting default values if missing.
-    """
     for k in expected_keys:
         d.setdefault(f"{k}{suffix}", default)
     return d
@@ -168,6 +174,6 @@ def get_combined_descriptors(smiles: str, name: str):
 
     # 6) Flatten to dict and ensure full padel vector
     combined = combined_df.iloc[0].to_dict()
-    combined = ensure_full_vector(combined, _expected_padel, suffix="_padel", default=np.nan)
+    combined = ensure_full_vector(combined, get_expected_padel(), suffix="_padel", default=np.nan)
 
     return combined, mol

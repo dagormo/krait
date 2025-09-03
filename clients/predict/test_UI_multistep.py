@@ -1,15 +1,18 @@
+import sys, os
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import os
-from engine import (build_conc_function, PCA_MODEL_PATH, MODEL_PATH, RESOURCES, predict_retention, predict_single,
-                    calibrate_velocity, predict_rt)
+
+from engine import (build_conc_function, PCA_MODEL_PATH, MODEL_PATH, DATA, predict_single,
+                    calibrate_velocity, predict_rt, DESCRIPTOR_TEMPLATE)
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-DESCRIPTOR_TEMPLATE = os.path.join(RESOURCES, "descriptors_noredundancy.csv")
 _expected_padel = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0).columns.drop(["Name", "SMILES"])
 
 # --- UI Layout ---
