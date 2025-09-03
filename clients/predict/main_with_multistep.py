@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use("Agg")
 import os
 import subprocess
 import pandas as pd
@@ -11,6 +9,8 @@ from rdkit.Chem import AllChem
 import importlib
 import matplotlib.pyplot as plt
 from mordred import Calculator, descriptors
+import matplotlib
+matplotlib.use("Agg")
 
 # Dynamically import all descriptor modules so Calculator(descriptors) works even when frozen
 descriptor_modules = [
