@@ -1,25 +1,55 @@
-# Ignore build artifacts
-*.pkg
-*.exe
-*.dll
-*.so
-build/
-dist/
-UI/build/
-
-# Python cache
+# -----------------
+# Python
+# -----------------
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
 # Virtual environments
 .venv/
 venv/
 env/
 
-# Secrets
-.env
+# -----------------
+# Build artifacts (PyInstaller, setup, etc.)
+# -----------------
+build/
+dist/
+*.spec
+*.exe
+*.dll
+*.so
+*.pkg
+*.toc
+*.zip
+*.log
+*.ini
+*.html
 
-# Large data & models
+# -----------------
+# Data + models (keep only tiny demo/test data in repo)
+# -----------------
 *.pkl
 *.csv
 *.tsv
+*.xls
+*.xlsx
+
+# -----------------
+# Java / PaDEL-Descriptor binaries
+# -----------------
+*.jar
+
+# -----------------
+# OS / IDE noise
+# -----------------
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+
+# -----------------
+# Config / secrets
+# -----------------
+.env
