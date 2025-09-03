@@ -1,0 +1,25 @@
+# Ignore build artifacts
+*.pkg
+*.exe
+*.dll
+*.so
+build/
+dist/
+UI/build/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+
+# Large data & models
+*.pkl
+*.csv
+*.tsv
