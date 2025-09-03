@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def calibrate_velocity(concs, rts, t0, L):
@@ -23,3 +24,17 @@ def predict_rt(conc_at, k, L, t0, dt=0.01, t_max=None):
         L_acc += (k * conc_at(t)) * dt
         t += dt
     return t + t0, t
+
+
+def plot_gradient(times, concs, rt_adj, rt_obs):
+    plt.figure(figsize=(8, 4))
+    plt.plot(times, concs, '-', linewidth=2)
+    plt.axvline(rt_adj, color='gray', linestyle='--', label=f'Elution at {rt_obs:.2f} min (predicted)')
+    plt.xlabel("Time (min)")
+    plt.ylabel("Eluent Concentration (mM)")
+    plt.title("Multi-Step Gradient Profile")
+    plt.legend(loc='best')
+    plt.tight_layout()
+    fig = plt.gcf()
+    plt.close(fig)
+    return fig

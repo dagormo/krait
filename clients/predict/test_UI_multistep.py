@@ -3,14 +3,12 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+from engine import (build_conc_function, PCA_MODEL_PATH, MODEL_PATH, RESOURCES, predict_retention, predict_single,
+                    calibrate_velocity, predict_rt)
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-# --- Load models and descriptor templates ---
-RESOURCES = "resources"
-PCA_MODEL_PATH = os.path.join(RESOURCES, "pca_model_95pct.pkl")
-MODEL_PATH = os.path.join(RESOURCES, "logk_model_hydroxide.pkl")
 DESCRIPTOR_TEMPLATE = os.path.join(RESOURCES, "descriptors_noredundancy.csv")
 _expected_padel = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0).columns.drop(["Name", "SMILES"])
 
@@ -18,19 +16,6 @@ _expected_padel = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0).columns.drop(["Name"
 st.set_page_config(page_title="Krait Predictor", layout="wide")
 st.title("🔬 Krait Retention Time Predictor with Multistep Gradient")
 
-# --- Gradient Utilities ---
-def build_conc_function(points):
-    times, concs = zip(*points)
-    return (lambda t: np.interp(t, times, concs)), np.array(times), np.array(concs)
-
-def predict_rt(conc_at, k, L, t0, dt=0.01, t_max=None):
-    if t_max is None:
-        t_max = 100
-    t, L_acc = 0.0, 0.0
-    while L_acc < L and t < t_max:
-        L_acc += (k * conc_at(t)) * dt
-        t += dt
-    return t + t0, t
 
 def parse_gradient_input(text):
     pts = []
@@ -42,10 +27,12 @@ def parse_gradient_input(text):
             st.warning(f"Invalid line: {line}")
     return pts
 
+
 # --- Input Form ---
 with st.form("compound_form"):
     st.header("1. Enter Compound List")
-    smiles_text = st.text_area("Paste compound name and SMILES (one per line, tab separated)", "Myo-inositol-1,4,5-phosphate\tC1[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@H]1OP(=O)([O-])[O-]\nCaffeic acid\tOC(=C/C=C/c1ccc(O)c(O)c1)C([O-])=O")
+    smiles_text = st.text_area("Paste compound name and SMILES (one per line, tab separated)",
+                               "Myo-inositol-1,4,5-phosphate\tC1[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@H]1OP(=O)([O-])[O-]\nCaffeic acid\tOC(=C/C=C/c1ccc(O)c(O)c1)C([O-])=O")
     st.header("2. Column and Method Conditions")
     flow = st.number_input("Flow rate (mL/min)", value=1.0)
     temp = st.number_input("Temperature (°C)", value=30.0)
@@ -72,7 +59,6 @@ with st.form("compound_form"):
     submitted = st.form_submit_button("🔮 Predict Retention Times")
 
 if submitted:
-    from clients.predict.main_with_multistep import get_combined_descriptors, apply_pca, classify_ion_type, calibrate_velocity
 
     name_smiles_pairs = []
     for line in smiles_text.splitlines():
@@ -96,45 +82,30 @@ if submitted:
 
     for name, smiles in name_smiles_pairs:
         try:
-            desc, mol = get_combined_descriptors(smiles, smiles)
-            x_pca, pc_names = apply_pca(desc, PCA_MODEL_PATH)
-
-            ion = classify_ion_type(mol)
-            ion_vector = {col: 1.0 if ion in col else 0.0 for col in ['IonType_anion', 'IonType_neutral']}
-            fg_vector = {f"Functional group_{x}": 1.0 if fg_label == x else 0.0 for x in [
-                "Alkanol quaternary ammonium", "Alkyl/alkanol quaternary ammonium", "Unknown"]}
-            r_vector = {f"Resin composition_{x}": 1.0 if r_label == x else 0.0 for x in [
-                "Unknown", "microporous", "super macroporous"]}
-
-            feature_dict = dict(zip(pc_names, x_pca))
-            feature_dict.update({
+            conditions = {
                 "Flow rate": flow,
                 "Temperature": temp,
                 "Particle diameter": dp,
                 "Column capacity": cap,
                 "Latex diameter": latex_d,
                 "Latex x-linking": latex_x,
-                "Hydrophobicity": hydro
-            })
-            feature_dict.update(ion_vector)
-            feature_dict.update(fg_vector)
-            feature_dict.update(r_vector)
+                "Hydrophobicity": hydro,
+                "Column length": column_length,
+                "Functional group": fg_label,
+                "Resin composition": r_label,
+            }
 
-            def predict_rt_at_conc(conc):
-                fdict = feature_dict.copy()
-                fdict["Start Concentration"] = conc
-                fdict["Gradient slope"] = 0.0  # isocratic
-                row = [fdict.get(col, 0.0) for col in feature_names]
-                logk = model.predict(pd.DataFrame([row], columns=feature_names))[0]
-                k = 10 ** logk
-                v0 = t0 * flow
-                vR = v0 * (1 + k)
-                return vR / flow
+            concs_iso = [5.0, 10.0, 30.0]
+            rts_iso = []
+            for c in concs_iso:
+                conds = conditions.copy()
+                conds["Start Concentration"] = c
+                conds["Gradient slope"] = 0.0
+                logk, tR = predict_single(smiles, name, conds, PCA_MODEL_PATH, MODEL_PATH, t0)
+                rts_iso.append(tR)
+            rts_iso = np.array(rts_iso)
 
-            concs_iso = np.array([5.0, 10.0, 30.0])
-            rts_iso = np.array([predict_rt_at_conc(c) for c in concs_iso])
             velocity = calibrate_velocity(concs_iso, rts_iso, t0, column_length)
-
             rt_obs, rt_adj = predict_rt(conc_at, velocity, column_length, t0)
 
             st.markdown(f"### {name}")
