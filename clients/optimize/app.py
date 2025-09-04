@@ -4,7 +4,9 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import json
 
+from export_utils import build_export_payload
 from core_models import fit_ln_k_ln_c
 from gradient_tools import (
     build_gradient_profile,
@@ -67,6 +69,12 @@ with st.sidebar:
     init_temp = st.number_input("Initial temperature", 0.01, 5.0, 0.6, 0.01)
     update_every = st.number_input("Update every N iters", 10, 2_000, 100, 10)
 
+    st.markdown("---")
+    st.subheader("Export context (for JSON)")
+    pm_name = st.text_input("Processing method name", "")
+    injection_name = st.text_input("Injection name", "")
+    column_name = st.text_input("Column", "")
+    include_window = st.checkbox("Include peak window (±2σ)", False)
 
 # ---------------------------
 # Editable tables
@@ -108,6 +116,8 @@ for _, row in analyte_df.iterrows():
     ]
     models[name] = fit_ln_k_ln_c(c1c2c3, rts, t0_min=t0, N=float(plates))
 
+# Preserve analyte order for export fallback
+analyte_order = list(models.keys())
 
 # ---------------------------
 # Buttons
@@ -254,17 +264,15 @@ if run_opt_btn:
         if worst_pair:
             st.info(f"Critical pair: {worst_pair[0]} vs {worst_pair[1]} — Rs = {worst_rs:.2f}")
 
-        out = pd.DataFrame({
-            "time_min": round_to(bt, 0.1),
-            "conc_mM": np.round(bc),
-            "curve": bk
-        }).sort_values("time_min")
-        st.dataframe(out, use_container_width=True)
+        # Export JSON
+        payload = build_export_payload(pm_name, injection_name, column_name, bt, bc, res, analyte_order, include_window)
+        st.subheader("Export — JSON")
+        st.code(json.dumps(payload, indent=2), language="json")
         st.download_button(
-            "⬇️ Download gradient CSV",
-            out.to_csv(index=False).encode("utf-8"),
-            file_name="optimized_gradient.csv",
-            mime="text/csv",
+            "⬇️ Download JSON",
+            json.dumps(payload, indent=2).encode("utf-8"),
+            file_name="optimized_gradient.json",
+            mime="application/json",
         )
 
 # ---------------------------
@@ -359,7 +367,7 @@ if run_nsga_live_btn:
         best_concs = np.asarray(best_concs, float)
         best_curves = np.asarray(best_curves if best_curves is not None else np.full(len(best_times), 5, int))
 
-        # NEW: quantize & collapse before plotting/export
+        # Quantize & collapse before plotting/export
         bt, bc, bk = collapse_repeats(best_times, best_concs, best_curves)
 
         fig_final, res = plot_chromatogram_and_gradient(
@@ -372,14 +380,12 @@ if run_nsga_live_btn:
         if worst_pair:
             st.info(f"Critical pair: {worst_pair[0]} vs {worst_pair[1]} — Rs = {worst_rs:.2f}")
 
-        out = pd.DataFrame({
-            "time_min": round_to(bt, step=0.1),
-            "conc_mM": np.round(bc),
-            "curve": bk
-        })
-        st.dataframe(out, use_container_width=True)
+        # Export JSON
+        payload = build_export_payload(pm_name, injection_name, column_name, bt, bc, res, analyte_order, include_window)
+        st.subheader("Export — JSON (NSGA+SA)")
+        st.code(json.dumps(payload, indent=2), language="json")
         st.download_button(
-            "⬇️ Download CSV (NSGA+SA)",
-            out.to_csv(index=False).encode("utf-8"),
-            file_name="optimized_gradient_nsga_sa.csv", mime="text/csv"
+            "⬇️ Download JSON (NSGA+SA)",
+            json.dumps(payload, indent=2).encode("utf-8"),
+            file_name="optimized_gradient_nsga_sa.json", mime="application/json"
         )
