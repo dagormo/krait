@@ -6,6 +6,7 @@ __all__ = [
     "seed_from_df"
 ]
 
+
 def round_to(x, step):
     return np.round(np.asarray(x, dtype=float) / step) * step
 
@@ -83,77 +84,6 @@ def seed_from_df(df, min_step=0.1):
     times, concs = times[order], concs[order]
     # ensure start at 0 and minimum spacing
     times[0] = 0.0
-    for i in range(1, len(times)):
-        if times[i] < times[i-1] + min_step and times[i] > times[i-1]:
-            times[i] = times[i-1] + min_step
-    return times, concs
-
-
-def clamp(x, lo, hi):
-    return max(lo, min(hi, x))
-
-
-def build_gradient_profile(times, concs, t_end, dt, curves=None):
-    times = np.asarray(times, dtype=float)
-    concs = np.asarray(concs, dtype=float)
-    t_end = max(float(t_end), float(np.max(times)))
-
-    if curves is None:
-        curves = [5] * len(times)
-    else:
-        curves = list(curves)
-        if len(curves) < len(times):
-            curves = curves + [5] * (len(times) - len(curves))
-
-    tg_all, Cg_all = [], []
-
-    # Loop through each segment
-    for i in range(len(times) - 1):
-        Tr, Tt = times[i], times[i + 1]
-        Vr, Vt = concs[i], concs[i + 1]
-        curve = curves[i]
-
-        n_points = max(2, int(np.ceil((Tt - Tr) / dt)))
-        seg_t, seg_c = apply_curve_segment(Vr, Vt, Tr, Tt, curve, n_points=n_points)
-
-        if i > 0:  # drop duplicate boundary
-            seg_t = seg_t[1:]
-            seg_c = seg_c[1:]
-
-        tg_all.extend(seg_t)
-        Cg_all.extend(seg_c)
-
-    # Add hold after last timestamp up to t_end
-    if times[-1] < t_end:
-        last_t, last_c = times[-1], concs[-1]
-        hold_t = np.arange(last_t + dt, t_end + dt, dt)
-        hold_c = np.full_like(hold_t, last_c)
-        tg_all.extend(hold_t)
-        Cg_all.extend(hold_c)
-
-    return np.array(tg_all), np.array(Cg_all)
-
-
-def enforce_slope(times, concs, max_slope):
-    times = np.asarray(times, dtype=float).copy()
-    concs = np.asarray(concs, dtype=float).copy()
-    for i in range(len(times)-1):
-        dt = max(1e-6, times[i+1] - times[i])
-        slope = (concs[i+1] - concs[i]) / dt
-        if abs(slope) > max_slope:
-            concs[i+1] = concs[i] + np.sign(slope) * max_slope * dt
-    return times, concs
-
-
-def seed_from_df(df, min_step=0.1):
-    g = df.dropna().copy()
-    times = round_to(g["time_min"].to_numpy(float), 0.1)
-    concs = np.round(g["conc_mM"].to_numpy(float))
-    order = np.lexsort((np.arange(len(times)), times))
-    times, concs = times[order], concs[order]
-    # ensure 0.0 start
-    times[0] = 0.0
-    # ensure minimum spacing forward
     for i in range(1, len(times)):
         if times[i] < times[i-1] + min_step and times[i] > times[i-1]:
             times[i] = times[i-1] + min_step
