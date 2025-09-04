@@ -7,19 +7,19 @@ import matplotlib.pyplot as plt
 import json
 
 from export_utils import build_export_payload
-from core_models import fit_ln_k_ln_c
-from gradient_tools import (
+from engine.core_models import fit_ln_k_ln_c
+from engine.gradient_tools import (
     build_gradient_profile,
     seed_from_df,
-    round_to,
     enforce_slope,
     enforce_nondec_concentration,
     collapse_repeats
 )
-from simulate_tools import find_critical_pair
-from optimize_sa import OptConfig, anneal_live
-from config import default_analytes_table, default_gradient_table, GAConfig
-from optimize_nsga import nsga2_live
+from engine.simulate_tools import find_critical_pair
+from engine.optimize_sa import OptConfig, anneal_live
+from engine.config import GAConfig
+from ui_defaults import default_analytes_table, default_gradient_table
+from engine.optimize_nsga import nsga2_live
 from plot_tools import plot_chromatogram_and_gradient
 
 

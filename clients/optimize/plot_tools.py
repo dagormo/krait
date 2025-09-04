@@ -1,5 +1,5 @@
-from gradient_tools import build_gradient_profile
-from simulate_tools import simulate_chromatogram, evaluate_resolution
+from engine.gradient_tools import build_gradient_profile
+from engine.simulate_tools import simulate_chromatogram, evaluate_resolution
 import matplotlib.pyplot as plt
 from collections import namedtuple
 

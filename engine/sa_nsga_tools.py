@@ -10,6 +10,7 @@ from simulate_tools import simulate_chromatogram, evaluate_resolution, pairwise_
 from typing import Dict, Tuple
 from config import GAConfig, OptConfig
 
+
 def _crowding_distance(objs: np.ndarray, idx: np.ndarray) -> np.ndarray:
     if len(idx) == 0:
         return np.array([])
