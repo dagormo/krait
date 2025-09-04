@@ -51,3 +51,12 @@ Thumbs.db
 # Config / secrets
 # -----------------
 .env
+
+# -----------------
+# C# build outputs
+# -----------------
+bin/
+obj/
+*.user
+*.suo
+*.vs/
