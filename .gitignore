@@ -60,3 +60,4 @@ obj/
 *.user
 *.suo
 *.vs/
+/clients/chromeleon_plugin/packages/Newtonsoft.Json.13.0.3
