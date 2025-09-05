@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.engine import (
+from engine import (
     build_conc_function,
     calibrate_velocity,
     predict_rt,
@@ -8,7 +8,7 @@ from src.engine import (
     predict_with_preprocessed
 )
 
-from src.api import (
+from api import (
     PCA_MODEL_PATH,
     LOGK_MODEL_PATH
 )

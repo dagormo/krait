@@ -20,7 +20,6 @@ from engine import (
     fit_ln_k_ln_c,
     nsga2_live
 )
-from api import LOGK_MODEL_PATH, PCA_MODEL_PATH
 from ui_defaults import default_analytes_table, default_gradient_table
 from plot_tools import plot_chromatogram_and_gradient
 
