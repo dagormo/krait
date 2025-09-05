@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "krait"
+version = "0.1.0"
+description = "Krait IC method development engine"
+dependencies = [
+    "streamlit",
+    "pandas",
+    "numpy",
+    "joblib",
+    "rdkit",
+    "mordred",
+    "python-dotenv",
+]

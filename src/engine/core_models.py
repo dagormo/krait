@@ -4,10 +4,9 @@ import math
 
 @dataclass
 class RetentionModel:
-    """Simple retention model: ln k = a − b ln(C)."""
     a: float
     b: float
-    t0: float  # hold-up time (min)
+    t0: float  # void time
     N: float   # theoretical plates
 
 

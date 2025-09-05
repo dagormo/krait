@@ -15,8 +15,7 @@ def clamp(x, lo, hi):
     return max(lo, min(hi, x))
 
 
-def build_gradient_profile(times, concs, t_end, dt):
-    """Piecewise-linear ramps; equal timestamps = instantaneous steps."""
+def build_gradient_profile(times, concs, t_end, dt, curves=None):
     times = np.asarray(times, dtype=float)
     concs = np.asarray(concs, dtype=float)
     t_end = max(float(t_end), float(np.max(times)))
@@ -26,16 +25,18 @@ def build_gradient_profile(times, concs, t_end, dt):
     # stable sort by time (keeps order of equal timestamps)
     order = np.lexsort((np.arange(len(times)), times))
     times = times[order]; concs = concs[order]
+    if curves is not None:
+        curves = np.asarray(curves, dtype=float)[order]
 
-    # linear ramps between increasing times
+    # ramp segments
     for i in range(len(times) - 1):
         t0, c0 = times[i], concs[i]
         t1, c1 = times[i + 1], concs[i + 1]
+        k = curves[i] if curves is not None else 5  # default to linear
         if t1 > t0:
-            m = (grid >= t0) & (grid < t1)
-            if np.any(m):
-                frac = (grid[m] - t0) / (t1 - t0)
-                C[m] = c0 + frac * (c1 - c0)
+            seg_t, seg_c = apply_curve_segment(c0, c1, t0, t1, curve=k)
+            m = (grid >= t0) & (grid <= t1)
+            C[m] = np.interp(grid[m], seg_t, seg_c)
 
     # hold after last point; pre-fill before first
     last_t, last_c = times[-1], concs[-1]
@@ -50,7 +51,9 @@ def build_gradient_profile(times, concs, t_end, dt):
             C[i] = last_val
         else:
             last_val = C[i]
+
     return grid, C
+
 
 
 def enforce_slope(times, concs, max_slope):

@@ -1,14 +1,14 @@
-from gradient_tools import (
+from typing import Dict, Tuple
+import numpy as np
+import math
+from .gradient_tools import (
     build_gradient_profile,
     round_to,
     enforce_slope,
     enforce_nondec_concentration,
 )
-import numpy as np
-import math
-from simulate_tools import simulate_chromatogram, evaluate_resolution, pairwise_resolution
-from typing import Dict, Tuple
-from config import GAConfig, OptConfig
+from .simulate_tools import simulate_chromatogram, evaluate_resolution, pairwise_resolution
+from .config import GAConfig, OptConfig
 
 
 def _crowding_distance(objs: np.ndarray, idx: np.ndarray) -> np.ndarray:

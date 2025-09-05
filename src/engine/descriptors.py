@@ -7,13 +7,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 import importlib
 from mordred import Calculator, descriptors
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
-DATA_DIR = os.path.join(PROJECT_ROOT, "data")
-
-PADEL_JAR_PATH = os.path.join(DATA_DIR, "PaDEL-Descriptor", "PaDEL-Descriptor.jar")
-DESCRIPTOR_TEMPLATE = os.path.join(DATA_DIR, "descriptors_noredundancy.csv")
+from api import PADEL_JAR_PATH, DESCRIPTOR_TEMPLATE
 
 
 # Load template for expected PaDEL features

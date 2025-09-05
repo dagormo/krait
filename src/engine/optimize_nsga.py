@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Dict, List
 import numpy as np
-from sa_nsga_tools import (_tournament_select, _crowding_distance, _evaluate, _mutate, _rand_program, _merge_crossover,
+from .sa_nsga_tools import (_tournament_select, _crowding_distance, _evaluate, _mutate, _rand_program, _merge_crossover,
                            _seed_variations, _constraints, GAConfig)
 
 

@@ -1,14 +1,22 @@
-import sys, os
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 import joblib
 
-from engine import (build_conc_function, PCA_MODEL_PATH, MODEL_PATH, DATA, predict_single,
-                    calibrate_velocity, predict_rt, DESCRIPTOR_TEMPLATE)
+from engine import (
+    build_conc_function,
+    calibrate_velocity,
+    predict_rt,
+    preprocess_analyte,
+    predict_with_preprocessed,
+    DESCRIPTOR_TEMPLATE
+)
+from api import (
+    PCA_MODEL_PATH,
+    LOGK_MODEL_PATH
+)
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -17,7 +25,7 @@ _expected_padel = pd.read_csv(DESCRIPTOR_TEMPLATE, nrows=0).columns.drop(["Name"
 
 # --- UI Layout ---
 st.set_page_config(page_title="Krait Predictor", layout="wide")
-st.title("🔬 Krait Retention Time Predictor with Multistep Gradient")
+st.title("Krait Retention Time Predictor with Multistep Gradient")
 
 
 def parse_gradient_input(text):
@@ -35,7 +43,10 @@ def parse_gradient_input(text):
 with st.form("compound_form"):
     st.header("1. Enter Compound List")
     smiles_text = st.text_area("Paste compound name and SMILES (one per line, tab separated)",
-                               "Myo-inositol-1,4,5-phosphate\tC1[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@H]1OP(=O)([O-])[O-]\nCaffeic acid\tOC(=C/C=C/c1ccc(O)c(O)c1)C([O-])=O")
+                               "Myo-inositol-1,4,5-phosphate\t"
+                               "C1[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@@H](O)[C@H](O[P](=O)([O-])[O-])[C@H]1OP(=O)([O-])[O-]\n"
+                               "Caffeic acid\t"
+                               "OC(=C/C=C/c1ccc(O)c(O)c1)C([O-])=O")
     st.header("2. Column and Method Conditions")
     flow = st.number_input("Flow rate (mL/min)", value=1.0)
     temp = st.number_input("Temperature (°C)", value=30.0)
@@ -78,7 +89,7 @@ if submitted:
     gradient_pts = parse_gradient_input(gradient_text)
     conc_at, times, concs = build_conc_function(gradient_pts)
 
-    model = joblib.load(MODEL_PATH)
+    model = joblib.load(LOGK_MODEL_PATH)
     feature_names = model.feature_names_in_
 
     predictions = []
@@ -98,13 +109,14 @@ if submitted:
                 "Resin composition": r_label,
             }
 
+            base_features, mol = preprocess_analyte(smiles, name, PCA_MODEL_PATH)
             concs_iso = [5.0, 10.0, 30.0]
             rts_iso = []
             for c in concs_iso:
                 conds = conditions.copy()
                 conds["Start Concentration"] = c
                 conds["Gradient slope"] = 0.0
-                logk, tR = predict_single(smiles, name, conds, PCA_MODEL_PATH, MODEL_PATH, t0)
+                logk, tR = predict_with_preprocessed(base_features, conds, LOGK_MODEL_PATH, t0)
                 rts_iso.append(tR)
             rts_iso = np.array(rts_iso)
 

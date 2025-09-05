@@ -7,19 +7,21 @@ import matplotlib.pyplot as plt
 import json
 
 from export_utils import build_export_payload
-from engine.core_models import fit_ln_k_ln_c
-from engine.gradient_tools import (
+from engine import (
+    GAConfig,
+    OptConfig,
+    anneal_live,
+    find_critical_pair,
     build_gradient_profile,
     seed_from_df,
     enforce_slope,
     enforce_nondec_concentration,
-    collapse_repeats
+    collapse_repeats,
+    fit_ln_k_ln_c,
+    nsga2_live
 )
-from engine.simulate_tools import find_critical_pair
-from engine.optimize_sa import OptConfig, anneal_live
-from engine.config import GAConfig
+from api import LOGK_MODEL_PATH, PCA_MODEL_PATH
 from ui_defaults import default_analytes_table, default_gradient_table
-from engine.optimize_nsga import nsga2_live
 from plot_tools import plot_chromatogram_and_gradient
 
 
@@ -193,7 +195,8 @@ if run_opt_btn:
         tr = packet["traces"]
 
         # --- chromatogram for CURRENT candidate ---
-        fig, res = plot_chromatogram_and_gradient(cur_t, cur_c, max_end_time, dt, models, curves=curves, title="Best-so-far Chromatogram — Live")
+        fig, res = plot_chromatogram_and_gradient(cur_t, cur_c, max_end_time, dt, models, curves=curves,
+                                                  title="Best-so-far Chromatogram — Live")
 
         # OPTIONAL overlay of best-so-far gradient (faint line on right axis)
         tg_b, Cg_b = build_gradient_profile(best_t, best_c, max_end_time, dt, curves=curves)

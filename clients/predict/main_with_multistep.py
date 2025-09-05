@@ -1,11 +1,18 @@
-import sys, os
 import numpy as np
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-from engine import (get_combined_descriptors, build_feature_vector, calibrate_velocity,
-                    predict_rt, classify_ion_type, apply_pca, build_conc_function, PCA_MODEL_PATH, MODEL_PATH,
-                    plot_gradient, predict_with_preprocessed, preprocess_analyte)
+
+from src.engine import (
+    build_conc_function,
+    calibrate_velocity,
+    predict_rt,
+    preprocess_analyte,
+    predict_with_preprocessed
+)
+
+from src.api import (
+    PCA_MODEL_PATH,
+    LOGK_MODEL_PATH
+)
+
 import matplotlib
 matplotlib.use("Agg")
 
@@ -75,7 +82,7 @@ if __name__ == "__main__":
             conds = conditions.copy()
             conds["Start Concentration"] = c
             conds["Gradient slope"] = 0.0
-            _, tR = predict_with_preprocessed(base_features, conds, MODEL_PATH, void_t)
+            _, tR = predict_with_preprocessed(base_features, conds, LOGK_MODEL_PATH, void_t)
             rts_iso.append(tR)
         rts_iso = np.array(rts_iso)
 

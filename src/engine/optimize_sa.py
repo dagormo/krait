@@ -1,8 +1,8 @@
 import numpy as np
-from gradient_tools import build_gradient_profile
-from simulate_tools import simulate_chromatogram
-from sa_nsga_tools import (OptConfig, _worst_pair_info, _constraints,_objective_timeseries,
-                           _mutate_random, _late_jump_after_penultimate)
+from .gradient_tools import build_gradient_profile
+from .simulate_tools import simulate_chromatogram
+from .sa_nsga_tools import (OptConfig, _worst_pair_info, _constraints, _objective_timeseries,
+                            _mutate_random, _late_jump_after_penultimate)
 
 
 def anneal_live(models, seed_times, seed_concs, cfg: OptConfig, update_every=100):

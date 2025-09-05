@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from core_models import RetentionModel, k_from_C, sigma_t_from_tr
+from .core_models import RetentionModel, k_from_C, sigma_t_from_tr
 
 
 def predict_tr_gradient(model: RetentionModel, time_grid, conc_grid, t_max):
