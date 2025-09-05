@@ -6,7 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import json
 
-from export_utils import build_export_payload
+from api.adapters.chromeleon_export import build_export_payload
 from engine import (
     GAConfig,
     OptConfig,
